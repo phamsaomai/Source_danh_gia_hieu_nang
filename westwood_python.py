@@ -60,11 +60,11 @@ factory.Set(
 
 factory.Set(
     "ErrorUnit",
-    ns.EnumValue(ns.RateErrorModel.ERROR_UNIT_PACKET)
+    ns.StringValue("ERROR_UNIT_PACKET")
 )
 
 # Tạo đối tượng từ factory
-error = factory.Create()
+error = factory.Create[ns.RateErrorModel]()
 
 # Gắn mô hình lỗi vào thiết bị nhận
 d2.Get(1).SetAttribute(
@@ -93,9 +93,14 @@ ns.Ipv4GlobalRoutingHelper.PopulateRoutingTables()
 
 # Ứng dụng nhận TCP
 port = 5000
+sink_address = ns.InetSocketAddress(
+    ns.Ipv4Address.GetAny(),
+    port
+)
+
 sink = ns.PacketSinkHelper(
     "ns3::TcpSocketFactory",
-    ns.InetSocketAddress(ns.Ipv4Address.GetAny(), port)
+    sink_address.ConvertTo()
 )
 
 sink_app = sink.Install(nodes.Get(2))
@@ -103,9 +108,14 @@ sink_app.Start(ns.Seconds(0))
 sink_app.Stop(ns.Seconds(args.simTime))
 
 # Ứng dụng gửi TCP
+destination = ns.InetSocketAddress(
+    interfaces.GetAddress(1),
+    port
+)
+
 source = ns.BulkSendHelper(
     "ns3::TcpSocketFactory",
-    ns.InetSocketAddress(interfaces.GetAddress(1), port)
+    destination.ConvertTo()
 )
 
 source.SetAttribute("MaxBytes", ns.UintegerValue(0))
@@ -120,7 +130,6 @@ ns.Simulator.Stop(ns.Seconds(args.simTime))
 ns.Simulator.Run()
 
 # Đo lượng dữ liệu nhận được
-receiver = ns.PacketSink.__cpp_name__
 sink_ptr = sink_app.Get(0).GetObject[ns.PacketSink]()
 received_bytes = sink_ptr.GetTotalRx()
 
