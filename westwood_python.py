@@ -48,15 +48,28 @@ bottleneck.SetChannelAttribute(
 d2 = bottleneck.Install(nodes.Get(1), nodes.Get(2))
 
 # Mô hình lỗi gói tin trên liên kết bottleneck
-error = ns.RateErrorModel()
-error.SetAttribute("ErrorRate", ns.DoubleValue(args.per))
-error.SetAttribute(
+
+# Tạo RateErrorModel thông qua ObjectFactory
+factory = ns.ObjectFactory()
+factory.SetTypeId("ns3::RateErrorModel")
+
+factory.Set(
+    "ErrorRate",
+    ns.DoubleValue(args.per)
+)
+
+factory.Set(
     "ErrorUnit",
     ns.EnumValue(ns.RateErrorModel.ERROR_UNIT_PACKET)
 )
 
+# Tạo đối tượng từ factory
+error = factory.Create()
+
+# Gắn mô hình lỗi vào thiết bị nhận
 d2.Get(1).SetAttribute(
-    "ReceiveErrorModel", ns.PointerValue(error)
+    "ReceiveErrorModel",
+    ns.PointerValue(error)
 )
 
 # Cài đặt TCP/IP
